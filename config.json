@@ -1,0 +1,10 @@
+{
+    "app_name": "Phone Exploit Tool",
+    "version": "1.0.0",
+    "developer": "Mr. Sufi",
+    "telegram_channel": "@t.me/iuron0",
+    "settings": {
+        "timeout": 30,
+        "auto_sync": true
+    }
+}
