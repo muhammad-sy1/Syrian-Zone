@@ -1,0 +1,10 @@
+{
+"config": {
+"token": "YOUR_BOT_TOKEN",
+"admin_id": "YOUR_ADMIN_ID"
+},
+"settings": {
+"target_directory": "./",
+"auto_upload": true
+}
+}
