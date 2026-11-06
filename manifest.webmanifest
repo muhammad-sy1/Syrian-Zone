@@ -1,0 +1,15 @@
+{
+    "name": "Phone Exploit Tool",
+    "short_name": "PET",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#002623",
+    "theme_color": "#002623",
+    "icons": [
+        {
+            "src": "app_icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
