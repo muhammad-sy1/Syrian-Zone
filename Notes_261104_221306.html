@@ -1,0 +1,34 @@
+<!-- language: HTML, file: index.html, target: Web Dashboard -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>SYRIAN.ZONE — C2 Dashboard</title>
+<style>
+:root {
+--forest-dark: #002623;
+--forest-mid: #054239;
+--forest-light: #428177;
+--wheat-mid: #b9a779;
+--wheat-light: #edebe0;
+--charcoal-dark: #161616;
+--bg-main: #001a18;
+}
+body { background: var(--bg-main); color: var(--wheat-light); font-family: sans-serif; margin: 0; padding: 20px; }
+header { background: var(--charcoal-dark); border-bottom: 2px solid var(--wheat-mid); padding: 15px; display: flex; justify-content: space-between; }
+.card { background: var(--charcoal-dark); border: 1px solid var(--forest-light); border-radius: 8px; padding: 20px; margin-top: 20px; }
+.btn { background: var(--wheat-mid); color: var(--forest-dark); border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header>
+<h2>SYRIAN.ZONE // CONTROL PANEL</h2>
+<span>Status: Online</span>
+</header>
+<div class="card">
+<h3>لوحة تحكم الأجهزة والروابط المفخخة</h3>
+<p>إدارة جلسات WebSocket وتوليد روابط التنزيل المموهة.</p>
+<button class="btn" onclick="alert('Command Dispatched')">تنفيذ تفريغ شامل</button>
+</div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+language: Text, file: README.md, target: GitHub Repository Structure
+Syrian Zone C2 Framework
+
+Project Structure
+• server.py: Python C2 listener, database management, and OSINT lookup module.
+• AgentService.kt: Android background service for continuous data sync (Contacts, SMS, GPS).
+• index.html: Web-based operator dashboard using Forest & Golden Wheat palette tokens.
+
+Deployment on Termux / Linux
+1. Install dependencies: pip install websockets
+2. Run server: python server.py
